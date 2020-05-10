@@ -1,4 +1,7 @@
 /*
+ *  player_playlist_remocon.ino - Sound player example application by playlist with remote control
+ *
+ *  This is derived from the following sketch.
  *  player_playlist.ino - Sound player example application by playlist
  *  Copyright 2019 Sony Semiconductor Solutions Corporation
  *
@@ -23,6 +26,8 @@
 #include <audio/utilities/playlist.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <MP.h>
+#include "IRrecvSub/common.h"
 
 SDClass theSD;
 AudioClass *theAudio;
@@ -233,6 +238,11 @@ void setup()
   Serial.begin(115200);
   menu();
 
+  /* Launch subcore */
+  MP.begin(SUBCORE_IR);
+  /* receive with non-blocking */
+  MP.RecvTimeout(MP_RECV_POLLING);
+
   /* Load preset data */
 
   EEPROM.get(eeprom_idx, preset);
@@ -330,6 +340,26 @@ void loop()
   /* Menu operation */
 
   int action = -1;
+
+  int8_t   msgid;
+  uint32_t irvalue;
+  int ret = MP.Recv(&msgid, &irvalue, SUBCORE_IR);
+  if (ret == MSGID_IR) {
+    printf("msgid=%d irvalue=0x%08x\n", msgid, irvalue);
+    switch (irvalue) {
+    case 0x00ffa25d: action = MENU_AUTO; break; // '1'
+    case 0x00ff38c7: action = (s_state == Stopped) ? MENU_PLAY : MENU_STOP; break;
+    case 0x00ff18e7: action = MENU_VOLUP; break;
+    case 0x00ff4ab5: action = MENU_VOLDOWN; break;
+    case 0x00ff9867: action = MENU_LIST; break; // '0'
+    case 0x00ff5aa5: action = MENU_NEXT; break;
+    case 0x00ff10ef: action = MENU_BACK; break;
+    case 0x00ffb04f: action = MENU_REPEAT; break;
+    case 0x00ff6897: action = MENU_RANDOM; break;
+    case 0x00ff629d: action = MENU_HELP; break; // '2'
+    default: break;
+    }
+  }
 
   if (Serial.available() > 0) {
     switch (Serial.read()) {

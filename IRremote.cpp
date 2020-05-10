@@ -197,4 +197,7 @@ ISR (TIMER_INTR_NAME)
 		else if (irparams.blinkpin) digitalWrite(irparams.blinkpin, LOW); // Turn user defined pin LED on
 				else BLINKLED_OFF() ;   // if no user defined LED pin, turn default LED pin for the hardware on
 	}
+#if defined(IR_USE_TIMER_SPRESENSE)
+	return USECPERTICK; // Cyclic timer
+#endif
 }

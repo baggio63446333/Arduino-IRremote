@@ -6,21 +6,21 @@
  * http://arcfn.com
  */
 
-#include "IRremote.h"
 
-#define POWER 0x7F80
-#define AIWA_RC_T501
+#include <IRremote.h>
+#include <MP.h>
 
 IRsend irsend;
 
-void setup() {
-  Serial.begin(115200);
-  Serial.println("Arduino Ready");
+void setup()
+{
+  MP.begin();
 }
 
 void loop() {
-  if (Serial.read() != -1) {
-    irsend.sendAiwaRCT501(POWER);
-    delay(60); // Optional
-  }
+	for (int i = 0; i < 3; i++) {
+		irsend.sendSony(0xa90, 12);
+		delay(40);
+	}
+	delay(5000); //5 second delay between each signal burst
 }

@@ -2,6 +2,7 @@
 // Include the IRremote library header
 //
 #include <IRremote.h>
+#include <MP.h>
 
 //------------------------------------------------------------------------------
 // Tell IRremote which Arduino pin is connected to the IR Receiver (TSOP4838)
@@ -14,6 +15,7 @@ IRrecv irrecv(recvPin);
 //
 void  setup ( )
 {
+  MP.begin();
   Serial.begin(115200);   // Status message will be sent to PC at 115200 baud
   irrecv.enableIRIn();  // Start the receiver
 }

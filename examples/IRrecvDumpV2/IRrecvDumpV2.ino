@@ -14,7 +14,7 @@ IRrecv irrecv(recvPin);
 //
 void  setup ( )
 {
-  Serial.begin(9600);   // Status message will be sent to PC at 9600 baud
+  Serial.begin(115200);   // Status message will be sent to PC at 115200 baud
   irrecv.enableIRIn();  // Start the receiver
 }
 

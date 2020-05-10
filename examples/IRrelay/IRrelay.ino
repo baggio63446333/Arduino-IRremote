@@ -62,7 +62,7 @@ void setup()
 {
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(13, OUTPUT);
-    Serial.begin(9600);
+    Serial.begin(115200);
   irrecv.enableIRIn(); // Start the receiver
 }
 

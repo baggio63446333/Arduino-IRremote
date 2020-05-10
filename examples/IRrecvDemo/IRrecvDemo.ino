@@ -16,7 +16,7 @@ decode_results results;
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   // In case the interrupt driver crashes on setup, give a clue
   // to the user what's going on.
   Serial.println("Enabling IRin");

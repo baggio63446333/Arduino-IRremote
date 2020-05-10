@@ -43,7 +43,7 @@ int mode;
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   // Check RECV_PIN to decide if we're RECEIVER or SENDER
   if (digitalRead(RECV_PIN) == HIGH) {
     mode = RECEIVER;

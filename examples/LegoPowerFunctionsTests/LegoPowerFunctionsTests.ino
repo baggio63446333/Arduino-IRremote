@@ -6,7 +6,7 @@
 #include <ir_Lego_PF_BitStreamEncoder.h>
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(1000); // wait for reset triggered by serial connection
   runBitStreamEncoderTests();
 }

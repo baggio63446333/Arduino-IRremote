@@ -56,11 +56,13 @@ void  IRsend::enableIROut (int khz)
 {
 // FIXME: implement ESP32 support, see IR_TIMER_USE_ESP32 in boarddefs.h
 #ifndef ESP32
+#ifndef ARDUINO_ARCH_SPRESENSE
 	// Disable the Timer2 Interrupt (which is used for receiving IR)
 	TIMER_DISABLE_INTR; //Timer2 Overflow Interrupt
 
 	pinMode(TIMER_PWM_PIN, OUTPUT);
 	digitalWrite(TIMER_PWM_PIN, LOW); // When not sending PWM, we want it low
+#endif
 
 	// COM2A = 00: disconnect OC2A
 	// COM2B = 00: disconnect OC2B; to send signal set to 10: OC2B non-inverted
@@ -75,6 +77,9 @@ void  IRsend::enableIROut (int khz)
 // Custom delay function that circumvents Arduino's delayMicroseconds limit
 
 void IRsend::custom_delay_usec(unsigned long uSecs) {
+#ifdef ARDUINO_ARCH_SPRESENSE
+  up_udelay(uSecs);
+#else
   if (uSecs > 4) {
     unsigned long start = micros();
     unsigned long endMicros = start + uSecs - 4;
@@ -83,6 +88,7 @@ void IRsend::custom_delay_usec(unsigned long uSecs) {
     }
     while ( micros() < endMicros ) {} // normal wait
   } 
+#endif
   //else {
   //  __asm__("nop\n\t"); // must have or compiler optimizes out
   //}

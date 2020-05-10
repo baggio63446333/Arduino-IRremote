@@ -46,6 +46,12 @@
 #	define BLINKLED        255
 #	define BLINKLED_ON()   1
 #	define BLINKLED_OFF()  1
+
+#elif defined(ARDUINO_ARCH_SPRESENSE)
+#	define BLINKLED        LED_BUILTIN
+#	define BLINKLED_ON()   (digitalWrite(BLINKLED, HIGH))
+#	define BLINKLED_OFF()  (digitalWrite(BLINKLED, LOW))
+
 #else
 #	define BLINKLED        13
 #	define BLINKLED_ON()  (PORTB |= B00100000)
@@ -146,6 +152,10 @@
 
 #elif defined(ESP32)
 	#define IR_TIMER_USE_ESP32
+
+#elif defined(ARDUINO_ARCH_SPRESENSE)
+	#define IR_USE_TIMER_SPRESENSE
+
 #else
 // Arduino Duemilanove, Diecimila, LilyPad, Mini, Fio, Nano, etc
 // ATmega48, ATmega88, ATmega168, ATmega328
@@ -584,6 +594,64 @@
 #define TIMER_ENABLE_INTR    
 #define TIMER_DISABLE_INTR   
 #define TIMER_INTR_NAME      
+
+//---------------------------------------------------------
+// SPRESENSE
+//
+
+#elif defined(IR_USE_TIMER_SPRESENSE)
+#include <nuttx/arch.h>
+#include <cxd56_clock.h>
+#define PWM_REG_BASE        (0x04195600)
+typedef struct
+{
+  volatile uint32_t PARAM;
+  volatile uint32_t EN;
+  volatile uint32_t UPDATE;
+} PWM_REG_t;
+#define PWM_REG(ch) ((PWM_REG_t*)(PWM_REG_BASE + (sizeof(PWM_REG_t) * (ch))))
+#define PWM_CH(pin) (TIMER_PWM_PIN == PIN_D06) ? 0 : \
+                    (TIMER_PWM_PIN == PIN_D05) ? 1 : \
+                    (TIMER_PWM_PIN == PIN_D09) ? 2 : \
+                    (TIMER_PWM_PIN == PIN_D03) ? 3 : -1
+#define TIMER_RESET
+#define TIMER_ENABLE_PWM do {                                           \
+  int ch = PWM_CH();                                                    \
+  assert(ch >= 0);                                                      \
+  PWM_REG(ch)->EN = 0x1;                                                \
+} while(0)
+#define TIMER_DISABLE_PWM   do {                                        \
+  int ch = PWM_CH();                                                    \
+  assert(ch >= 0);                                                      \
+  PWM_REG(ch)->EN = 0x0;                                                \
+} while(0)
+#define TIMER_ENABLE_INTR   do {                                        \
+    attachTimerInterrupt(&TIMER_INTR_NAME, USECPERTICK);                \
+} while(0)
+#define TIMER_DISABLE_INTR  do {                                        \
+    detachTimerInterrupt();                                             \
+} while(0)
+#define TIMER_INTR_NAME     IRTimer
+#ifdef ISR
+#undef ISR
+#endif
+#define ISR(f)  unsigned int f(void)
+extern ISR(TIMER_INTR_NAME);
+#define TIMER_CONFIG_KHZ(val) do {                                      \
+  int ch = PWM_CH();                                                    \
+  assert(ch >= 0);                                                      \
+  uint32_t pwmfreq = cxd56_get_pwm_baseclock();                         \
+  uint32_t cycle = pwmfreq / 1024 / val;                                \
+  uint32_t off = cycle * 2 / 3;                                         \
+  PWM_REG(ch)->EN = 0x0;                                                \
+  PWM_REG(ch)->PARAM = (off & 0xffff) << 16 | (cycle & 0xffff);         \
+  if (ch < 2) CXD56_PIN_CONFIGS(PINCONFS_PWMA);                         \
+  else CXD56_PIN_CONFIGS(PINCONFS_PWMB);                                \
+} while(0)
+#define TIMER_CONFIG_NORMAL()
+#define TIMER_PWM_PIN       3 // select either 3, 5, 6 or 9
+#define cli()
+#define sei()
 
 //---------------------------------------------------------
 // Unknown Timer

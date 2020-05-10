@@ -297,6 +297,21 @@ void setup()
 
 }
 
+/* Menu item */
+enum {
+  MENU_AUTO = 0,
+  MENU_PLAY,
+  MENU_STOP,
+  MENU_VOLUP,
+  MENU_VOLDOWN,
+  MENU_LIST,
+  MENU_NEXT,
+  MENU_BACK,
+  MENU_REPEAT,
+  MENU_RANDOM,
+  MENU_HELP,
+};
+
 void loop()
 {
   static enum State {
@@ -314,108 +329,125 @@ void loop()
 
   /* Menu operation */
 
+  int action = -1;
+
   if (Serial.available() > 0) {
     switch (Serial.read()) {
-    case 'a': // autoplay
-      if (preset.autoplay) {
-        preset.autoplay = 0;
-      } else {
-        preset.autoplay = 1;
-      }
-      printf("Auto=%s\n", (preset.autoplay) ? "On" : "Off");
-      EEPROM.put(eeprom_idx, preset);
-      break;
-    case 'p': // play
-      if (s_state == Stopped) {
-        s_state = Ready;
-        show(&currentTrack);
-      }
-      break;
-    case 's': // stop
-      if (s_state == Active) {
-        stop();
-      }
-      s_state = Stopped;
-      break;
-    case '+': // volume up
-      preset.volume += 10;
-      if (preset.volume > 120) {
-        /* set max volume */
-        preset.volume = 120;
-      }
-      printf("Volume=%d\n", preset.volume);
-      theAudio->setVolume(preset.volume);
-      EEPROM.put(eeprom_idx, preset);
-      break;
-    case '-': // volume down
-      preset.volume -= 10;
-      if (preset.volume < -1020) {
-        /* set min volume */
-        preset.volume = -1020;
-      }
-      printf("Volume=%d\n", preset.volume);
-      theAudio->setVolume(preset.volume);
-      EEPROM.put(eeprom_idx, preset);
-      break;
-    case 'l': // list
-      if (preset.repeat) {
-        thePlaylist.setRepeatMode(Playlist::RepeatModeOff);
-        list();
-        thePlaylist.setRepeatMode(Playlist::RepeatModeOn);
-      } else {
-        list();
-      }
-      break;
-    case 'n': // next
-      if (s_state == Ready) {
-        // do nothing
-      } else { // s_state == Active or Stopped
-        if (s_state == Active) {
-          stop();
-          s_state = Ready;
-        }
-        if (!next()) {
-          s_state = Stopped;
-        }
-      }
-      break;
-    case 'b': // back
-      if (s_state == Active) {
-        stop();
-        s_state = Ready;
-      }
-      prev();
-      break;
-    case 'r': // repeat
-      if (preset.repeat) {
-        preset.repeat = 0;
-        thePlaylist.setRepeatMode(Playlist::RepeatModeOff);
-      } else {
-        preset.repeat = 1;
-        thePlaylist.setRepeatMode(Playlist::RepeatModeOn);
-      }
-      printf("Repeat=%s\n", (preset.repeat) ? "On" : "Off");
-      EEPROM.put(eeprom_idx, preset);
-      break;
-    case 'R': // random
-      if (preset.random) {
-        preset.random = 0;
-        thePlaylist.setPlayMode(Playlist::PlayModeNormal);
-      } else {
-        preset.random = 1;
-        thePlaylist.setPlayMode(Playlist::PlayModeShuffle);
-      }
-      printf("Random=%s\n", (preset.random) ? "On" : "Off");
-      EEPROM.put(eeprom_idx, preset);
-      break;
+    case 'a': action = MENU_AUTO; break;
+    case 'p': action = MENU_PLAY; break;
+    case 's': action = MENU_STOP; break;
+    case '+': action = MENU_VOLUP; break;
+    case '-': action = MENU_VOLDOWN; break;
+    case 'l': action = MENU_LIST; break;
+    case 'n': action = MENU_NEXT; break;
+    case 'b': action = MENU_BACK; break;
+    case 'r': action = MENU_REPEAT; break;
+    case 'R': action = MENU_RANDOM; break;
     case 'm':
     case 'h':
-    case '?':
-      menu();
-      break;
-    default:
-      break;
+    case '?': action = MENU_HELP; break;
+    default: break;
     }
+  }
+
+  switch (action) {
+  case MENU_AUTO: // autoplay
+    if (preset.autoplay) {
+      preset.autoplay = 0;
+    } else {
+      preset.autoplay = 1;
+    }
+    printf("Auto=%s\n", (preset.autoplay) ? "On" : "Off");
+    EEPROM.put(eeprom_idx, preset);
+    break;
+  case MENU_PLAY: // play
+    if (s_state == Stopped) {
+      s_state = Ready;
+      show(&currentTrack);
+    }
+    break;
+  case MENU_STOP: // stop
+    if (s_state == Active) {
+      stop();
+    }
+    s_state = Stopped;
+    break;
+  case MENU_VOLUP: // volume up
+    preset.volume += 10;
+    if (preset.volume > 120) {
+      /* set max volume */
+      preset.volume = 120;
+    }
+    printf("Volume=%d\n", preset.volume);
+    theAudio->setVolume(preset.volume);
+    EEPROM.put(eeprom_idx, preset);
+    break;
+  case MENU_VOLDOWN: // volume down
+    preset.volume -= 10;
+    if (preset.volume < -1020) {
+      /* set min volume */
+      preset.volume = -1020;
+    }
+    printf("Volume=%d\n", preset.volume);
+    theAudio->setVolume(preset.volume);
+    EEPROM.put(eeprom_idx, preset);
+    break;
+  case MENU_LIST: // list
+    if (preset.repeat) {
+      thePlaylist.setRepeatMode(Playlist::RepeatModeOff);
+      list();
+      thePlaylist.setRepeatMode(Playlist::RepeatModeOn);
+    } else {
+      list();
+    }
+    break;
+  case MENU_NEXT: // next
+    if (s_state == Ready) {
+      // do nothing
+    } else { // s_state == Active or Stopped
+      if (s_state == Active) {
+        stop();
+        s_state = Ready;
+      }
+      if (!next()) {
+        s_state = Stopped;
+      }
+    }
+    break;
+  case MENU_BACK: // back
+    if (s_state == Active) {
+      stop();
+      s_state = Ready;
+    }
+    prev();
+    break;
+  case MENU_REPEAT: // repeat
+    if (preset.repeat) {
+      preset.repeat = 0;
+      thePlaylist.setRepeatMode(Playlist::RepeatModeOff);
+    } else {
+      preset.repeat = 1;
+      thePlaylist.setRepeatMode(Playlist::RepeatModeOn);
+    }
+    printf("Repeat=%s\n", (preset.repeat) ? "On" : "Off");
+    EEPROM.put(eeprom_idx, preset);
+    break;
+  case MENU_RANDOM: // random
+    if (preset.random) {
+      preset.random = 0;
+      thePlaylist.setPlayMode(Playlist::PlayModeNormal);
+    } else {
+      preset.random = 1;
+      thePlaylist.setPlayMode(Playlist::PlayModeShuffle);
+    }
+    printf("Random=%s\n", (preset.random) ? "On" : "Off");
+    EEPROM.put(eeprom_idx, preset);
+    break;
+  case MENU_HELP:
+    menu();
+    break;
+  default:
+    break;
   }
 
   /* Processing in accordance with the state */

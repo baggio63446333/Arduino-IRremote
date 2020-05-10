@@ -339,11 +339,14 @@ void loop()
 
   /* Menu operation */
 
-  int action = -1;
+  int action;
+  int ret;
+
+  action = -1;
 
   int8_t   msgid;
   uint32_t irvalue;
-  int ret = MP.Recv(&msgid, &irvalue, SUBCORE_IR);
+  ret = MP.Recv(&msgid, &irvalue, SUBCORE_IR);
   if (ret == MSGID_IR) {
     printf("msgid=%d irvalue=0x%08x\n", msgid, irvalue);
     switch (irvalue) {
